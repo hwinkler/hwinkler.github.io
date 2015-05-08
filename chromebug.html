@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<head>
+  <title>tiff test</title>
+  <script src="tiff.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js"></script>
+</head>
+<body>
+  <canvas id="webgl1" width="1" height="1"></canvas>
+  <canvas id="webgl2" width="1" height="1"></canvas>
+  <br>
+  <span id="webgl1-result"></span>
+  <br>
+  <span id="webgl2-result"></span>
+  <table id="rasters-table">
+    <tbody>
+      <tr id="row" ><td id="cell"></td></tr>
+    </tbody>
+  </table>
+  <script>
+
+   var file =  '4239330030-2.tiff';
+   
+   require([
+     'dojo/dom',
+     'dojo/dom-construct',
+     'dojo/request'
+   ], function (dom,  domConstruct, request) {
+     
+     function canWebgl(id){
+       var canvas3da = dom.byId(id);
+       var context3da = canvas3da.getContext('webgl');               
+       if (!context3da){
+         dom.byId(id+'-result').innerHTML =  'no ' + id;
+       } else {
+         dom.byId(id+'-result').innerHTML = 'yeah  ' + id + '!';
+       }
+     }   
+
+     Tiff.initialize({TOTAL_MEMORY: 1024*1024*256});
+     
+     canWebgl('webgl1');
+     
+     request.get (
+       file,{ handleAs: 'arraybuffer'}).then (function (response){
+         var tiff = new Tiff({buffer: response});
+         try{
+           var td = dom.byId('cell');
+           var div = domConstruct.place('<div style="width:100px; height: 400px; overflow: scroll"></div>', td);
+           var arrays = tiff.toArrays(callback);
+
+           canWebgl('webgl2');            
+           
+           function callback(image, y, width, height){
+             var canvas = makeCanvasFromImage(image, width, height);
+             var canvas = makeCanvasFromImage(image, width, height);
+             canvas.style.width = '100px';
+             canvas.style.height = Math.round( 100 / width * height) + 'px';
+             canvas.style.display = 'block';
+             div.appendChild(canvas);
+           }
+           
+           function makeCanvasFromImage(image, width, height){
+             var canvas = document.createElement('canvas');
+             var context = canvas.getContext('2d');
+             canvas.width = width;
+             canvas.height = height;
+             var imageData = context.createImageData(width, height);
+             try{ 
+               imageData.data.set(image);
+               context.putImageData(imageData, 0, 0);
+               canvas.style.width = Math.round(width/10) + 'px';
+               canvas.style.height =  Math.round(height/10) + 'px';
+               canvas.style.display = 'block';
+             }catch( err){
+               console.error(err);
+             }
+             return canvas;         
+           }
+
+         } finally {
+           tiff.destroy();
+         }
+       });
+
+   });
+   
+
+  </script>
+</body>
+</html>
