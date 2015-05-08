@@ -5,6 +5,39 @@
   <script src="//ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js"></script>
 </head>
 <body>
+  <p>
+    Demonstrates a 100 percent reproducible webgl "snag" in Chrome  35.0.1916.86 beta,
+    at least on my 2013 MBP, Yosemite, with Nvidia 750M.
+  </p>
+  <p>
+    You should first see a string &quot;yeah webgl1!&quot;. That signifies that
+    we were able to get a webgl context from a canvas.
+  </p>
+  <p>
+    Next, wait a period
+    (about 20 secs on my laptop) as the program computes more than 2000 little 2D canvas elements.
+  </p>
+  <p>
+    Then you'll see what looks like one long image render (it&apos;s all the little ones strung together)
+    and then, if everything works, you&apos;ll see a string &quot;yeah webgl2!&quot;, signifying that
+    we were able to obtain a second webgl context on a second canvas.
+    But on  Chrome  35.0.1916.86 beta,
+    you&apos;ll see a string &quot;no webgl2&quot;. Frequently this will be accompanies by the &quot;Web GL hit a snag&quot;
+    message.
+  </p>
+  <p>
+    The page uses an emscripten-compiled version of libtiff , derived from <a href="https://github.com/seikichi/tiff.js/tree/master">seikichi&apos;s work</a>
+    but augmented to turn very long tiffs into manageable shorter ones. It reads a long tiff and processes it into these little canvas elements.
+    Each canvas id 1504 x 32. It is styled so that they each scale down to 100x2.
+  </p>
+  <p>
+    The creation of these canvases in this way interferes with Chrome&apos;s webgl somehow.
+
+    
+  </p>
+    
+    
+  </p>
   <canvas id="webgl1" width="1" height="1"></canvas>
   <canvas id="webgl2" width="1" height="1"></canvas>
   <br>
