@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <title>tiff test</title>
+    <script src="tiff.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js"
+            data-dojo-config="async: true"></script>
+  </head>
+  <body>
+    <span id="timing"></span>
+    <table id="rasters-table">
+      <tbody>
+        <tr id="row" ></tr>
+      </tbody>
+    </table>
+    <script>
+     var file1 = 'CDD22.tif'; // small
+     var file2 = 'CJQ15.tif'; // large
+     var files =  [ '4239330030.tiff',  '4239330030-2.tiff',  '4239330030-3.tiff']; // large
+     
+     require([
+       'dojo/dom',
+       'dojo/dom-construct',
+       'dojo/request'
+     ], function (dom, domConstruct, request) {
+       
+       Tiff.initialize({TOTAL_MEMORY: 1024*1024*256});
+
+       var totalTime = 0;
+       var fileCount = 0;
+       files.forEach(function(file){
+         request.get (
+           file,{ handleAs: 'arraybuffer'}).then (function (response){
+             var t1 = Date.now();
+             var tiff = new Tiff({buffer: response});
+             try{
+
+               function callback(image, y, width, height){
+                 var canvas = makeCanvasFromImage(image, width, height);
+                 canvas.style.width = '100px';
+                 canvas.style.height = Math.round( 100 / width * height) + 'px';
+                 canvas.style.display = 'block';
+                 div.appendChild(canvas);
+               }
+               
+               function makeCanvasFromImage(image, width, height){
+                 var canvas = document.createElement('canvas');
+                 var context = canvas.getContext('2d');
+                 canvas.width = width;
+                 canvas.height = height;
+                 var imageData = context.createImageData(width, height);
+                 try{ 
+                   imageData.data.set(image);
+                   context.putImageData(imageData, 0, 0);
+                   canvas.style.width = Math.round(width/10) + 'px';
+                   canvas.style.height =  Math.round(height/10) + 'px';
+                   canvas.style.display = 'block';
+                 }catch( err){
+                   console.error(err);
+                 }
+
+                 return canvas;         
+               }
+
+               var td = dom.byId('row').insertCell();
+               var div = domConstruct.place('<div style="width:100px; height: 400px; overflow: scroll"></div>', td);
+               tiff.toArrays(callback);
+
+             } catch(e){
+               console.error(e);
+             } finally {
+               tiff.destroy();
+             }
+
+             totalTime += (Date.now() - t1);
+             if(++fileCount === files.length ){
+               dom.byId('timing').innerHTML = 'total time ' + Math.round(totalTime / 1000) + ' s';
+             }
+           });
+
+         
+       });
+     });
+     
+
+    </script>
+  </body>
+</html>
